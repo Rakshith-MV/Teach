@@ -15,6 +15,20 @@ TOPICS = [
         "template": "linear_transformations.html",
         "tags": ["Linear algebra", "Change of basis", "Eigenvectors", "PCA"],
     },
+    {
+        "slug": "neural-networks",
+        "title": "How Neural Networks Learn",
+        "tagline": "Nonlinearities bend and fold space; gradient descent finds the bend; a change of basis speeds it up.",
+        "template": "neural_networks.html",
+        "tags": ["Activations", "Live training", "Gradient descent", "Preconditioning"],
+    },
+    {
+        "slug": "limits-continuity",
+        "title": "Limits & Continuity",
+        "tagline": "The ε–δ game, one-sided limits, kinds of discontinuity, and the derivative as a limit.",
+        "template": "limits_continuity.html",
+        "tags": ["Calculus", "ε–δ", "Derivatives", "Floating point"],
+    },
 ]
 TOPICS_BY_SLUG = {t["slug"]: t for t in TOPICS}
 

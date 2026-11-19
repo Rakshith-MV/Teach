@@ -49,10 +49,13 @@ const fmt = (x, d = 2) => {
 };
 
 class Plane {
-  constructor(canvas, { range = 5, onChange = null } = {}) {
+  // range = half-width of the view in world units; aspect = height / width; center = world point at the middle.
+  constructor(canvas, { range = 5, onChange = null, aspect = 1, center = [0, 0] } = {}) {
     this.c = canvas;
     this.ctx = canvas.getContext("2d");
     this.range = range;
+    this.aspect = aspect;
+    this.center = center;
     this.handles = [];
     this.drag = null;
     this.onChange = onChange;
@@ -80,7 +83,9 @@ class Plane {
       if (this.drag) {
         let w = this.toW(p);
         const snap = (x) => (Math.abs(x * 2 - Math.round(x * 2)) < 0.08 ? Math.round(x * 2) / 2 : x);
-        w = [snap(w[0]), snap(w[1])].map((x) => Math.max(-this.range, Math.min(this.range, x)));
+        const [cx, cy] = this.center, ry = this.range * this.aspect;
+        w = [snap(w[0]), snap(w[1])];
+        w = [Math.max(cx - this.range, Math.min(cx + this.range, w[0])), Math.max(cy - ry, Math.min(cy + ry, w[1]))];
         this.drag.set(w);
         this.onChange && this.onChange();
       } else {
@@ -106,14 +111,27 @@ class Plane {
     const dpr = window.devicePixelRatio || 1;
     const w = this.c.clientWidth || 400;
     this.c.width = Math.round(w * dpr);
-    this.c.height = Math.round(w * dpr);
+    this.c.height = Math.round(w * this.aspect * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.w = w; this.h = w;
+    this.w = w; this.h = w * this.aspect;
     this.scale = w / (2 * this.range);
   }
 
-  toS(v) { return [this.w / 2 + v[0] * this.scale, this.h / 2 - v[1] * this.scale]; }
-  toW(p) { return [(p[0] - this.w / 2) / this.scale, -(p[1] - this.h / 2) / this.scale]; }
+  // Change the visible window without resizing the canvas.
+  setView(range, center = this.center) {
+    this.range = range;
+    this.center = center;
+    this.scale = this.w / (2 * range);
+  }
+
+  // Visible world rectangle: [xmin, xmax, ymin, ymax]
+  bounds() {
+    const [cx, cy] = this.center, ry = this.range * this.aspect;
+    return [cx - this.range, cx + this.range, cy - ry, cy + ry];
+  }
+
+  toS(v) { return [this.w / 2 + (v[0] - this.center[0]) * this.scale, this.h / 2 - (v[1] - this.center[1]) * this.scale]; }
+  toW(p) { return [(p[0] - this.w / 2) / this.scale + this.center[0], -(p[1] - this.h / 2) / this.scale + this.center[1]]; }
 
   clear() {
     const ctx = this.ctx;
@@ -141,10 +159,82 @@ class Plane {
     const ctx = this.ctx;
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
+    const o = this.toS([0, 0]);
     ctx.beginPath();
-    ctx.moveTo(0, this.h / 2); ctx.lineTo(this.w, this.h / 2);
-    ctx.moveTo(this.w / 2, 0); ctx.lineTo(this.w / 2, this.h);
+    ctx.moveTo(0, o[1]); ctx.lineTo(this.w, o[1]);
+    ctx.moveTo(o[0], 0); ctx.lineTo(o[0], this.h);
     ctx.stroke();
+  }
+
+  // Light grid + numbered ticks at a "nice" spacing for the current zoom (for function graphs).
+  ticks(gridColor, textColor) {
+    const [x0, x1, y0, y1] = this.bounds();
+    const raw = (x1 - x0) / 8, p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = [1, 2, 5, 10].map((m) => m * p).find((s) => s >= raw);
+    const ctx = this.ctx, o = this.toS([0, 0]);
+    const dec = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+    ctx.save();
+    ctx.strokeStyle = gridColor; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) { const s = this.toS([x, 0]); ctx.moveTo(s[0], 0); ctx.lineTo(s[0], this.h); }
+    for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) { const s = this.toS([0, y]); ctx.moveTo(0, s[1]); ctx.lineTo(this.w, s[1]); }
+    ctx.stroke();
+    ctx.fillStyle = textColor;
+    ctx.font = "11px ui-monospace, Consolas, monospace";
+    const ly = Math.min(this.h - 4, Math.max(12, o[1] + 13)), lx = Math.min(this.w - 30, Math.max(4, o[0] + 4));
+    for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) {
+      if (Math.abs(x) < step / 2) continue;
+      ctx.fillText(x.toFixed(dec), this.toS([x, 0])[0] + 2, ly);
+    }
+    for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) {
+      if (Math.abs(y) < step / 2) continue;
+      ctx.fillText(y.toFixed(dec), lx, this.toS([0, y])[1] - 2);
+    }
+    ctx.restore();
+  }
+
+  // Polyline through world points; null entries break the line.
+  polyline(pts, color, width = 1.5, alpha = 1) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = "round";
+    ctx.beginPath();
+    let pen = false;
+    for (const p of pts) {
+      if (!p) { pen = false; continue; }
+      const s = this.toS(p);
+      pen ? ctx.lineTo(s[0], s[1]) : ctx.moveTo(s[0], s[1]);
+      pen = true;
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Graph y = f(x) over [xa, xb] (defaults to the view), breaking at jumps / non-finite values.
+  curve(f, color, width = 2.5, xa = null, xb = null, n = 1500) {
+    const [x0, x1, y0, y1] = this.bounds();
+    xa = xa ?? x0; xb = xb ?? x1;
+    const H = y1 - y0, pts = [];
+    // Is there a jump between x0 and x1? Bisect: for a continuous f the gap shrinks, for a jump it doesn't.
+    const isJump = (xl, yl, xr, yr) => {
+      const gap0 = Math.abs(yr - yl);
+      for (let it = 0; it < 40; it++) {
+        const xm = (xl + xr) / 2, ym = f(xm);
+        if (!isFinite(ym)) return true;
+        if (Math.abs(ym - yl) > Math.abs(yr - ym)) { xr = xm; yr = ym; } else { xl = xm; yl = ym; }
+      }
+      return Math.abs(yr - yl) > gap0 * 0.5;
+    };
+    let prev = null;
+    for (let k = 0; k <= n; k++) {
+      const x = xa + ((xb - xa) * k) / n, y = f(x);
+      if (!isFinite(y) || Math.abs(y - (y0 + y1) / 2) > H * 20) { pts.push(null); prev = null; continue; }
+      if (prev !== null && Math.abs(y - prev[1]) > H * 0.03 && isJump(prev[0], prev[1], x, y)) pts.push(null); // don't connect across a jump
+      pts.push([x, y]);
+      prev = [x, y];
+    }
+    this.polyline(pts, color, width);
   }
 
   lineThrough(dir, color, width = 1.5, dash = [6, 5]) {

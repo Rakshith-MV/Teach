@@ -134,10 +134,10 @@
     <div class="readout" id="det3d"></div>
   </div>
 
-  <div class="twin wide-left">
+  <div class="twin">
     <figure>
-      <figcaption><b>The space moves.</b> The lattice, the unit cube and the point $v$ are all carried by $A$.
-        The faint floor grid and the grey axes stay fixed for reference.</figcaption>
+      <figcaption><b>Reading 1: the space moves.</b> The lattice, the unit cube and the point $v$ are all carried
+        by $A$. The floor grid and the grey axes stay fixed for reference.</figcaption>
       <canvas id="cvSpace" class="plane"></canvas>
       <div class="row">
         <button id="play3d" class="small">▶ Play</button>
@@ -149,16 +149,23 @@
         <label class="chk mono-note"><input type="checkbox" id="lattice3d" checked> show lattice</label>
       </div>
     </figure>
-    <div class="side">
-      <div class="callout" id="coords3d" style="margin-top:3.6em"></div>
-      <div class="legend" style="margin-top:14px">
+    <figure>
+      <figcaption><b>Reading 2: the space stays put, the basis changes.</b> The same point, reached by walking
+        $x$ steps along $a_1$, then $y$ along $a_2$, then $z$ along $a_3$.</figcaption>
+      <canvas id="cvSpace2" class="plane"></canvas>
+      <div class="legend">
         <span><i class="sw" style="background:var(--i)"></i>a₁ = Aî</span>
         <span><i class="sw" style="background:var(--j)"></i>a₂ = Aĵ</span>
         <span><i class="sw" style="background:var(--k)"></i>a₃ = Ak̂</span>
-        <span><i class="sw sw-new"></i>transformed lattice</span>
+        <span><i class="sw sw-new"></i>lattice of the new basis</span>
+        <span><i class="sw sw-v"></i>the point</span>
       </div>
-    </div>
+    </figure>
   </div>
+  <div class="callout" id="coords3d"></div>
+  <p class="hint">The two views share one camera: rotate either and both turn. Set $t = 1$ on the left and compare:
+    the pictures are identical. Only the story differs: "the point moved to $Av$" vs "the point was always there,
+    and $(x, y, z)$ is its address in the new basis".</p>
 
   <details class="teach">
     <summary>Questions to ask the student</summary>

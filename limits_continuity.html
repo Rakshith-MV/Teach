@@ -1,0 +1,1227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limits & Continuity · Math, Visualized</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <style>
+:root {
+  --bg: #f7f6f2; --panel: #ffffff; --ink: #1d1f24; --muted: #5d6470;
+  --line: #e2e0d8; --accent: #5b4bd6;
+  --i: #e8590c; --j: #1971c2; --v: #9c36b5;
+  --grid: #e8e5dd; --axis: #8a8f99;
+  --warn: #c92a2a; --ok: #2b8a3e; --canvas: #ffffff;
+  --band-eps: rgba(43,138,62,0.12); --band-del: rgba(25,113,194,0.12);
+  --curve: #5b4bd6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161b; --panel: #1c1f26; --ink: #e8e9ec; --muted: #9aa1ad;
+    --line: #2d313b; --accent: #9d8fff;
+    --i: #ff8a3d; --j: #4dabf7; --v: #da77f2;
+    --grid: #252830; --axis: #6b7280;
+    --warn: #ff6b6b; --ok: #69db7c; --canvas: #181a20;
+    --band-eps: rgba(105,219,124,0.10); --band-del: rgba(77,171,247,0.10);
+    --curve: #9d8fff;
+  }
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width:1180px; margin:0 auto; padding:0 20px 80px; }
+code, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size:.9em; }
+
+.topbar { display:flex; align-items:center; gap:10px; padding:14px 24px;
+  border-bottom:1px solid var(--line); background:var(--panel);
+  position:sticky; top:0; z-index:10; }
+.brand { font-weight:700; color:var(--ink); text-decoration:none; }
+.crumb { color:var(--muted); }
+
+.hero { padding:56px 0 24px; }
+.hero.small { padding:36px 0 8px; }
+.hero h1 { font-size:2.4rem; margin:0 0 8px; letter-spacing:-.02em; }
+.lead { font-size:1.15rem; color:var(--muted); max-width:760px; margin:0; }
+.lead strong { color:var(--ink); }
+
+.toc { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+.toc a { padding:6px 12px; border:1px solid var(--line); border-radius:999px;
+  color:var(--ink); text-decoration:none; background:var(--panel); font-size:.9rem; }
+.toc a:hover { border-color:var(--accent); color:var(--accent); }
+
+.lesson { background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  padding:28px 30px; margin-top:28px; scroll-margin-top:70px; }
+.lesson h2 { margin:0 0 10px; font-size:1.5rem; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.num { display:inline-grid; place-items:center; width:32px; height:32px; border-radius:50%;
+  background:var(--accent); color:#fff; font-size:1rem; flex:none; }
+.lesson > p { max-width:900px; }
+
+.controls { display:flex; flex-wrap:wrap; align-items:center; gap:14px 22px; margin:18px 0; }
+.controls label { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:.92rem; }
+.presets { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.presets .label { color:var(--muted); font-size:.92rem; margin-right:4px; }
+button { font:inherit; font-size:.88rem; cursor:pointer; padding:6px 12px; border-radius:8px;
+  border:1px solid var(--line); background:var(--bg); color:var(--ink); }
+button:hover { border-color:var(--accent); }
+button.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+button.small { padding:4px 10px; }
+
+canvas.fn-canvas { width:100%; aspect-ratio:5/3; display:block;
+  border:1px solid var(--line); border-radius:12px; background:var(--canvas); touch-action:none; }
+.row { display:flex; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap; }
+.row input[type=range] { flex:1; min-width:120px; }
+
+.callout { margin-top:18px; padding:14px 18px; border-radius:12px;
+  background:var(--bg); border:1px solid var(--line); font-size:.98rem; }
+.callout .big { font-size:1.08rem; }
+.c-i { color:var(--i); font-weight:600; }
+.c-j { color:var(--j); font-weight:600; }
+.c-v { color:var(--v); font-weight:600; }
+.warn { color:var(--warn); }
+.ok  { color:var(--ok); }
+.hint { color:var(--muted); font-size:.9rem; }
+
+.insight { margin-top:22px; padding:18px 22px; border-left:4px solid var(--accent);
+  background:color-mix(in srgb, var(--accent) 7%, transparent); border-radius:0 12px 12px 0; }
+.insight h3 { margin:0 0 6px; }
+
+.teach { margin-top:18px; border:1px dashed var(--line); border-radius:12px; padding:10px 16px; }
+.teach summary { cursor:pointer; font-weight:600; color:var(--accent); }
+.teach ol { margin:10px 0 4px; }
+.teach li { margin-bottom:6px; }
+
+.twin { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+@media (max-width:860px) { .twin { grid-template-columns:1fr; } }
+figure { margin:0; }
+figcaption { font-size:.93rem; color:var(--muted); min-height:2.4em; margin-bottom:6px; }
+figcaption b { color:var(--ink); }
+
+.badge { display:inline-flex; align-items:center; gap:6px; padding:5px 12px;
+  border-radius:999px; font-size:.88rem; font-weight:600; }
+.badge.pass { background:color-mix(in srgb, var(--ok) 15%, transparent); color:var(--ok); }
+.badge.fail { background:color-mix(in srgb, var(--warn) 15%, transparent); color:var(--warn); }
+
+.cond-row { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:1rem; }
+.cond-row input[type=checkbox] { width:20px; height:20px; accent-color:var(--accent); cursor:pointer; }
+.cond-row .status { font-weight:700; min-width:20px; }
+
+.zoo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin:16px 0; }
+.zoo-card { background:var(--bg); border:1px solid var(--line); border-radius:12px;
+  padding:16px; cursor:pointer; transition:border-color .15s, transform .15s; }
+.zoo-card:hover, .zoo-card.active { border-color:var(--accent); transform:translateY(-2px); }
+.zoo-card h4 { margin:0 0 4px; font-size:1.05rem; }
+.zoo-card p  { margin:0; font-size:.9rem; color:var(--muted); }
+
+@media (max-width:600px) {
+  main { padding:0 16px 60px; }
+  .lesson { padding:20px 16px; }
+  .hero h1 { font-size:1.9rem; }
+}
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="#">∑ Math, Visualized</a>
+  <span class="crumb">/ Limits & Continuity</span>
+</header>
+
+<main>
+
+<section class="hero small">
+  <h1>Limits & Continuity</h1>
+  <p class="lead"><strong>What happens to $f(x)$ as $x$ gets close to some target?</strong>
+    That question — the limit — is the foundation of calculus.
+    Continuity asks: does the function's value <em>at</em> the target match what the limit predicts?</p>
+  <nav class="toc">
+    <a href="#s1">1 · What is a limit?</a>
+    <a href="#s2">2 · The ε–δ definition</a>
+    <a href="#s3">3 · Continuity</a>
+    <a href="#s4">4 · Types of discontinuity</a>
+    <a href="#s5">5 · The Intermediate Value Theorem</a>
+  </nav>
+</section>
+
+<!-- ========================== SECTION 1 ========================== -->
+<section class="lesson" id="s1">
+  <h2><span class="num">1</span> What is a limit?</h2>
+  <p>We write $\displaystyle\lim_{x \to a} f(x) = L$ when $f(x)$ gets arbitrarily close to $L$
+    as $x$ approaches $a$ — <strong>without caring what (if anything) happens at $x = a$ itself</strong>.
+    Watch the two dots approach $x = a$ from the left and right. If both $f$-values converge to the
+    same number, the limit exists.</p>
+
+  <div class="controls">
+    <div class="presets" id="fnBtns1">
+      <span class="label">Function:</span>
+    </div>
+  </div>
+
+  <canvas id="cv1" class="fn-canvas"></canvas>
+
+  <div class="row">
+    <span class="mono" style="white-space:nowrap">far</span>
+    <input type="range" id="approach1" min="0" max="1" step="0.002" value="0">
+    <span class="mono" style="white-space:nowrap">close</span>
+    <button id="play1" class="small">▶ Play</button>
+  </div>
+
+  <div class="callout" id="readout1"></div>
+
+  <div class="insight" id="insight1"></div>
+
+  <details class="teach">
+    <summary>Questions to ask the student</summary>
+    <ol>
+      <li>For $\sin(x)/x$: the function is undefined at 0, yet the limit is 1. How can a function "approach" a value it never reaches?</li>
+      <li>For $|x|/x$: both one-sided limits exist. Why doesn't the two-sided limit exist?</li>
+      <li>For $\sin(1/x)$: zoom in mentally near $x=0$. Why can't we pin down what $f(x)$ is approaching?</li>
+      <li>For $x\sin(1/x)$: the oscillation is still there, but now it's squeezed to 0. What changed?</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ========================== SECTION 2 ========================== -->
+<section class="lesson" id="s2">
+  <h2><span class="num">2</span> The ε–δ definition</h2>
+  <p>How do we make "gets arbitrarily close" precise? We say
+    $\displaystyle\lim_{x\to a}f(x) = L$ if:
+    <strong>for every $\varepsilon > 0$ there exists $\delta > 0$ such that
+    $0 < |x - a| < \delta \implies |f(x) - L| < \varepsilon$.</strong></p>
+  <p>Translation: you name any tolerance $\varepsilon$ (the <span class="ok">green band</span>).
+    I must find a window $\delta$ (the <span class="c-j">blue band</span>) around $a$
+    so the curve stays inside your tolerance. <strong>Try it: pick $\varepsilon$, then adjust $\delta$.</strong></p>
+
+  <div class="controls">
+    <div class="presets" id="fnBtns2">
+      <span class="label">Function:</span>
+    </div>
+  </div>
+  <div class="controls">
+    <label>$\varepsilon$ <input type="range" id="epsSlider" min="0.05" max="2" step="0.01" value="0.8">
+      <span class="mono" id="epsVal">0.80</span></label>
+    <label>$\delta$ <input type="range" id="delSlider" min="0.02" max="2" step="0.01" value="0.5">
+      <span class="mono" id="delVal">0.50</span></label>
+  </div>
+
+  <canvas id="cv2" class="fn-canvas"></canvas>
+
+  <div class="callout" id="readout2"></div>
+
+  <div class="insight">
+    <h3>The game metaphor</h3>
+    <p>Think of ε–δ as a two-player game. <strong>Player 1</strong> (the challenger) picks any $\varepsilon > 0$, no matter how small.
+      <strong>Player 2</strong> (the prover) must respond with a $\delta > 0$ that works.
+      If Player 2 can <em>always</em> win, the limit is $L$. If there's some $\varepsilon$ where no $\delta$ works, the limit is not $L$.</p>
+  </div>
+
+  <details class="teach">
+    <summary>Questions to ask the student</summary>
+    <ol>
+      <li>For $f(x)=2x+1$ at $a=1$: if $\varepsilon = 0.5$, what is the largest $\delta$ that works? Can you find a formula relating $\delta$ to $\varepsilon$?</li>
+      <li>For $f(x)=x^2$ at $a=2$: does $\delta = \varepsilon$ always work? Why not? (Hint: the slope matters.)</li>
+      <li>Why does the definition say $0 < |x-a|$ rather than just $|x-a| < \delta$? What would change?</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ========================== SECTION 3 ========================== -->
+<section class="lesson" id="s3">
+  <h2><span class="num">3</span> Continuity: three conditions</h2>
+  <p>A function is <strong>continuous at $x = a$</strong> when three things all hold.
+    Toggle each condition below to see what happens when it fails.</p>
+
+  <div class="controls" style="flex-direction:column; align-items:flex-start;">
+    <div class="cond-row">
+      <input type="checkbox" id="cond1" checked>
+      <span>① $f(a)$ is defined</span>
+      <span class="status" id="st1">✓</span>
+    </div>
+    <div class="cond-row">
+      <input type="checkbox" id="cond2" checked>
+      <span>② $\displaystyle\lim_{x\to a}f(x)$ exists</span>
+      <span class="status" id="st2">✓</span>
+    </div>
+    <div class="cond-row">
+      <input type="checkbox" id="cond3" checked>
+      <span>③ $\displaystyle\lim_{x\to a}f(x) = f(a)$</span>
+      <span class="status" id="st3">✓</span>
+    </div>
+  </div>
+
+  <canvas id="cv3" class="fn-canvas"></canvas>
+
+  <div class="callout" id="readout3"></div>
+
+  <div class="insight">
+    <h3>Why all three?</h3>
+    <p>Each condition rules out a different kind of "surprise":</p>
+    <p>① rules out holes (the function simply isn't defined there).<br>
+       ② rules out jumps and wild oscillation (the left and right limits don't match).<br>
+       ③ rules out "misplaced" points (the function is defined, the limit exists, but they disagree).</p>
+    <p>When all three hold, $f$ has <strong>no surprises</strong> at $a$: the value you'd predict from nearby points is exactly the value you get.</p>
+  </div>
+
+  <details class="teach">
+    <summary>Questions to ask the student</summary>
+    <ol>
+      <li>Condition ③ is redundant if ① or ② fails. Why do we still list all three?</li>
+      <li>Can ② fail while ① holds? Give an example.</li>
+      <li>If only ③ fails (① and ② hold), can you "fix" the function by redefining $f(a)$?</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ========================== SECTION 4 ========================== -->
+<section class="lesson" id="s4">
+  <h2><span class="num">4</span> The discontinuity zoo</h2>
+  <p>When continuity fails, the <em>type</em> of discontinuity tells you what went wrong. Click each card to see the example.</p>
+
+  <div class="zoo-grid" id="zooGrid">
+    <div class="zoo-card active" data-zoo="removable">
+      <h4>Removable</h4>
+      <p>The limit exists, but $f(a)$ is missing or wrong. A single-point "hole" you can fill in.</p>
+    </div>
+    <div class="zoo-card" data-zoo="jump">
+      <h4>Jump</h4>
+      <p>Both one-sided limits exist but are different. The function "jumps" across a gap.</p>
+    </div>
+    <div class="zoo-card" data-zoo="infinite">
+      <h4>Infinite</h4>
+      <p>The function blows up to $\pm\infty$. A vertical asymptote.</p>
+    </div>
+    <div class="zoo-card" data-zoo="oscillating">
+      <h4>Oscillating</h4>
+      <p>The function oscillates too wildly for a limit to exist at all.</p>
+    </div>
+  </div>
+
+  <canvas id="cv4" class="fn-canvas"></canvas>
+  <div class="callout" id="readout4"></div>
+
+  <details class="teach">
+    <summary>Questions to ask the student</summary>
+    <ol>
+      <li>Which discontinuity type is the "mildest"? (Removable — you can fix it by defining or redefining one point.)</li>
+      <li>At a jump discontinuity, how many one-sided limits exist? (Two, and both are finite, but they're not equal.)</li>
+      <li>Is $f(x) = \sin(1/x)$ at $x=0$ a removable discontinuity? (No — no limit exists, so there's no value to "fill in.")</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ========================== SECTION 5 ========================== -->
+<section class="lesson" id="s5">
+  <h2><span class="num">5</span> The Intermediate Value Theorem</h2>
+  <p>If $f$ is <strong>continuous</strong> on $[a,\,b]$ and $k$ is any value between $f(a)$ and $f(b)$, then there is at least one
+    $c \in (a,b)$ with $f(c) = k$. In plain language: <strong>a continuous curve that starts below $k$ and ends above it must cross $k$ somewhere.</strong></p>
+  <p class="hint">Drag the dashed line up and down to change $k$. The intersection is highlighted.</p>
+
+  <div class="controls">
+    <div class="presets" id="fnBtns5">
+      <span class="label">Function:</span>
+    </div>
+  </div>
+
+  <canvas id="cv5" class="fn-canvas"></canvas>
+  <div class="callout" id="readout5"></div>
+
+  <div class="insight">
+    <h3>Why continuity is essential</h3>
+    <p>Remove continuity and the theorem fails. A jump function can go from $-1$ to $+1$ without ever hitting 0.
+      The IVT is the reason you can trust root-finding algorithms like bisection: if $f(a)$ and $f(b)$ have opposite signs
+      and $f$ is continuous, there <em>must</em> be a root between them.</p>
+  </div>
+</section>
+
+</main>
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]})"></script>
+
+<script>
+"use strict";
+// =====================================================================
+//  Utilities
+// =====================================================================
+const $ = id => document.getElementById(id);
+const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const fmt = (x, d = 3) => {
+  if (x === undefined || x === null) return '—';
+  if (!isFinite(x)) return x > 0 ? '+∞' : '−∞';
+  const v = Math.abs(x) < 0.5 * Math.pow(10, -d) ? 0 : x;
+  return v.toFixed(d);
+};
+const lerp = (a, b, t) => a + (b - a) * t;
+const renderMath = el => {
+  if (window.renderMathInElement) renderMathInElement(el, {
+    delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]
+  });
+};
+
+// =====================================================================
+//  FnPlot — reusable canvas function plotter
+// =====================================================================
+class FnPlot {
+  constructor(canvas, opts = {}) {
+    this.c = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.xMin = opts.xMin ?? -6;  this.xMax = opts.xMax ?? 6;
+    this.yMin = opts.yMin ?? -4;  this.yMax = opts.yMax ?? 6;
+    this.onDraw = null;
+    this._resize();
+    new ResizeObserver(() => { this._resize(); if (this.onDraw) this.onDraw(); }).observe(canvas);
+  }
+  _resize() {
+    const dpr = devicePixelRatio || 1;
+    const w = this.c.clientWidth || 500;
+    const h = this.c.clientHeight || 300;
+    this.c.width  = Math.round(w * dpr);
+    this.c.height = Math.round(h * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.W = w; this.H = h;
+  }
+  sx(x) { return (x - this.xMin) / (this.xMax - this.xMin) * this.W; }
+  sy(y) { return (1 - (y - this.yMin) / (this.yMax - this.yMin)) * this.H; }
+  mx(sx) { return this.xMin + sx / this.W * (this.xMax - this.xMin); }
+  my(sy) { return this.yMin + (1 - sy / this.H) * (this.yMax - this.yMin); }
+
+  clear() {
+    this.ctx.fillStyle = cssVar('--canvas');
+    this.ctx.fillRect(0, 0, this.W, this.H);
+  }
+
+  grid(step = 1) {
+    const ctx = this.ctx;
+    ctx.strokeStyle = cssVar('--grid'); ctx.lineWidth = 1; ctx.beginPath();
+    for (let x = Math.ceil(this.xMin / step) * step; x <= this.xMax; x += step) {
+      ctx.moveTo(this.sx(x), 0); ctx.lineTo(this.sx(x), this.H);
+    }
+    for (let y = Math.ceil(this.yMin / step) * step; y <= this.yMax; y += step) {
+      ctx.moveTo(0, this.sy(y)); ctx.lineTo(this.W, this.sy(y));
+    }
+    ctx.stroke();
+  }
+
+  axes() {
+    const ctx = this.ctx, col = cssVar('--axis');
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath();
+    if (this.yMin <= 0 && this.yMax >= 0) { ctx.moveTo(0, this.sy(0)); ctx.lineTo(this.W, this.sy(0)); }
+    if (this.xMin <= 0 && this.xMax >= 0) { ctx.moveTo(this.sx(0), 0); ctx.lineTo(this.sx(0), this.H); }
+    ctx.stroke();
+    // tick labels
+    ctx.fillStyle = cssVar('--muted'); ctx.font = '12px system-ui,sans-serif'; ctx.textAlign = 'center';
+    const y0 = this.sy(0);
+    for (let x = Math.ceil(this.xMin); x <= this.xMax; x++) {
+      if (x === 0) continue;
+      ctx.fillText(x, this.sx(x), Math.min(Math.max(y0 + 16, 16), this.H - 4));
+    }
+    ctx.textAlign = 'right';
+    const x0 = this.sx(0);
+    for (let y = Math.ceil(this.yMin); y <= this.yMax; y++) {
+      if (y === 0) continue;
+      ctx.fillText(y, Math.min(Math.max(x0 - 8, 24), this.W - 4), this.sy(y) + 4);
+    }
+  }
+
+  plotFn(fn, color, width = 2.5) {
+    const ctx = this.ctx;
+    const steps = this.W * 1.5;
+    const dx = (this.xMax - this.xMin) / steps;
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.beginPath();
+    let drawing = false, prevY = NaN;
+    for (let i = 0; i <= steps; i++) {
+      const x = this.xMin + i * dx;
+      const y = fn(x);
+      if (y === undefined || isNaN(y) || !isFinite(y)) { drawing = false; prevY = NaN; continue; }
+      const sy = this.sy(y);
+      // detect jump: break line if large vertical leap
+      if (drawing && Math.abs(y - prevY) > (this.yMax - this.yMin) * 0.6) { drawing = false; }
+      if (sy < -50 || sy > this.H + 50) { drawing = false; prevY = y; continue; }
+      if (!drawing) { ctx.moveTo(this.sx(x), sy); drawing = true; }
+      else { ctx.lineTo(this.sx(x), sy); }
+      prevY = y;
+    }
+    ctx.stroke();
+  }
+
+  // Plot only within [xL, xR]
+  plotFnRange(fn, xL, xR, color, width = 3) {
+    const ctx = this.ctx;
+    const steps = Math.max(200, this.W);
+    const dx = (xR - xL) / steps;
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.beginPath();
+    let drawing = false, prevY = NaN;
+    for (let i = 0; i <= steps; i++) {
+      const x = xL + i * dx;
+      const y = fn(x);
+      if (y === undefined || isNaN(y) || !isFinite(y)) { drawing = false; prevY = NaN; continue; }
+      const sy = this.sy(y);
+      if (drawing && Math.abs(y - prevY) > (this.yMax - this.yMin) * 0.6) { drawing = false; }
+      if (sy < -50 || sy > this.H + 50) { drawing = false; prevY = y; continue; }
+      if (!drawing) { ctx.moveTo(this.sx(x), sy); drawing = true; }
+      else { ctx.lineTo(this.sx(x), sy); }
+      prevY = y;
+    }
+    ctx.stroke();
+  }
+
+  point(x, y, color, r = 6, filled = true) {
+    if (!isFinite(y)) return;
+    const ctx = this.ctx, sx = this.sx(x), sy = this.sy(y);
+    if (sy < -20 || sy > this.H + 20) return;
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    if (filled) { ctx.fillStyle = color; ctx.fill(); }
+    else {
+      ctx.fillStyle = cssVar('--canvas'); ctx.fill();
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+    }
+  }
+
+  hLine(y, color, width = 1.5, dash = [5, 4]) {
+    const ctx = this.ctx; ctx.save(); ctx.setLineDash(dash);
+    ctx.strokeStyle = color; ctx.lineWidth = width;
+    ctx.beginPath(); ctx.moveTo(0, this.sy(y)); ctx.lineTo(this.W, this.sy(y)); ctx.stroke();
+    ctx.restore();
+  }
+
+  vLine(x, color, width = 1.5, dash = [5, 4]) {
+    const ctx = this.ctx; ctx.save(); ctx.setLineDash(dash);
+    ctx.strokeStyle = color; ctx.lineWidth = width;
+    ctx.beginPath(); ctx.moveTo(this.sx(x), 0); ctx.lineTo(this.sx(x), this.H); ctx.stroke();
+    ctx.restore();
+  }
+
+  hBand(center, half, color) {
+    const ctx = this.ctx;
+    const y1 = this.sy(center + half), y2 = this.sy(center - half);
+    ctx.fillStyle = color; ctx.fillRect(0, y1, this.W, y2 - y1);
+  }
+
+  vBand(center, half, color) {
+    const ctx = this.ctx;
+    const x1 = this.sx(center - half), x2 = this.sx(center + half);
+    ctx.fillStyle = color; ctx.fillRect(x1, 0, x2 - x1, this.H);
+  }
+
+  label(x, y, text, color, offX = 10, offY = -12) {
+    if (!isFinite(y)) return;
+    const ctx = this.ctx, sx = this.sx(x) + offX, sy = this.sy(y) + offY;
+    if (sy < -20 || sy > this.H + 20) return;
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.lineWidth = 4; ctx.strokeStyle = cssVar('--canvas'); ctx.strokeText(text, sx, sy);
+    ctx.fillStyle = color; ctx.fillText(text, sx, sy);
+  }
+
+  corner(text, color) {
+    const ctx = this.ctx;
+    ctx.font = '13px ui-monospace, Consolas, monospace';
+    ctx.fillStyle = color || cssVar('--muted');
+    ctx.fillText(text, 10, 20);
+  }
+}
+
+// smooth animation helper
+function animateRange(input, to, ms, onStep, done) {
+  const from = parseFloat(input.value), t0 = performance.now();
+  (function step(now) {
+    const k = Math.min(1, (now - t0) / ms);
+    const e = k < 0.5 ? 2*k*k : 1 - Math.pow(-2*k+2, 2)/2;
+    input.value = from + (to - from) * e;
+    onStep();
+    if (k < 1) requestAnimationFrame(step); else { onStep(); done && done(); }
+  })(performance.now());
+}
+
+
+// =====================================================================
+//  FUNCTION LIBRARY
+// =====================================================================
+const FN_LIB = {
+  // — Limit explorer functions —
+  quadratic: {
+    fn: x => x * x,
+    a: 2, L: 4, Lm: 4, Lp: 4, fA: 4,
+    label: 'x²', latex: 'x^2',
+    desc: 'Continuous and smooth. The limit equals $f(a)$.',
+    xR: [-3, 5], yR: [-1, 9],
+  },
+  removable: {
+    fn: x => Math.abs(x - 1) < 1e-12 ? undefined : (x*x - 1) / (x - 1),
+    a: 1, L: 2, Lm: 2, Lp: 2, fA: undefined,
+    label: '(x²−1)/(x−1)', latex: '\\frac{x^2-1}{x-1}',
+    desc: 'Simplifies to $x+1$ everywhere except $x=1$. The limit is 2, but $f(1)$ is undefined — a "hole".',
+    xR: [-3, 5], yR: [-2, 6],
+  },
+  sinc: {
+    fn: x => Math.abs(x) < 1e-12 ? undefined : Math.sin(x) / x,
+    a: 0, L: 1, Lm: 1, Lp: 1, fA: undefined,
+    label: 'sin(x)/x', latex: '\\frac{\\sin x}{x}',
+    desc: 'The classic limit: $\\lim_{x\\to 0}\\frac{\\sin x}{x} = 1$. Undefined at 0, but the limit exists.',
+    xR: [-12, 12], yR: [-0.5, 1.5],
+  },
+  sign: {
+    fn: x => Math.abs(x) < 1e-12 ? undefined : (x > 0 ? 1 : -1),
+    a: 0, L: null, Lm: -1, Lp: 1, fA: undefined,
+    label: '|x|/x (sign)', latex: '\\text{sgn}(x)',
+    desc: 'Left limit $= -1$, right limit $= +1$. They disagree, so the two-sided limit <strong>does not exist</strong>.',
+    xR: [-5, 5], yR: [-3, 3],
+  },
+  reciprocal: {
+    fn: x => Math.abs(x) < 1e-12 ? undefined : 1 / x,
+    a: 0, L: null, Lm: -Infinity, Lp: Infinity, fA: undefined,
+    label: '1/x', latex: '\\frac{1}{x}',
+    desc: 'The function blows up to $+\\infty$ from the right and $-\\infty$ from the left.',
+    xR: [-5, 5], yR: [-8, 8],
+  },
+  sin_recip: {
+    fn: x => Math.abs(x) < 1e-12 ? undefined : Math.sin(1 / x),
+    a: 0, L: null, Lm: null, Lp: null, fA: undefined,
+    label: 'sin(1/x)', latex: '\\sin\\frac{1}{x}',
+    desc: 'Oscillates infinitely fast near 0. <strong>No limit</strong> — not even one-sided.',
+    xR: [-2, 2], yR: [-2, 2],
+  },
+  xsin_recip: {
+    fn: x => Math.abs(x) < 1e-12 ? undefined : x * Math.sin(1 / x),
+    a: 0, L: 0, Lm: 0, Lp: 0, fA: undefined,
+    label: 'x·sin(1/x)', latex: 'x\\sin\\frac{1}{x}',
+    desc: 'Still oscillates, but squeezed between $\\pm|x|$, which both $\\to 0$. <strong>Squeeze theorem gives limit = 0.</strong>',
+    xR: [-2, 2], yR: [-1.5, 1.5],
+  },
+};
+
+// — ε-δ functions (must have a finite limit) —
+const ED_LIB = {
+  linear: {
+    fn: x => 2*x + 1,
+    a: 1, L: 3,
+    label: '2x+1', latex: '2x+1',
+    hint: '$|f(x)-3| = 2|x-1|$, so $\\delta = \\varepsilon/2$ always works.',
+    xR: [-2, 5], yR: [-2, 8],
+  },
+  quadratic: {
+    fn: x => x * x,
+    a: 2, L: 4,
+    label: 'x²', latex: 'x^2',
+    hint: '$|x^2-4| = |x-2|\\,|x+2|$. Near $a=2$, $|x+2| \\le 5$ when $\\delta \\le 1$, so $\\delta = \\min(1,\\,\\varepsilon/5)$ works.',
+    xR: [-1, 5], yR: [-1, 9],
+  },
+  removable: {
+    fn: x => Math.abs(x-1) < 1e-12 ? undefined : (x*x-1)/(x-1),
+    a: 1, L: 2,
+    label: '(x²−1)/(x−1)', latex: '\\frac{x^2-1}{x-1}',
+    hint: 'Away from $x=1$ this equals $x+1$, so $|f(x)-2| = |x-1|$ and $\\delta = \\varepsilon$ works.',
+    xR: [-2, 5], yR: [-1, 6],
+  },
+  sqrt: {
+    fn: x => Math.sqrt(Math.max(x, 0)),
+    a: 4, L: 2,
+    label: '√x', latex: '\\sqrt{x}',
+    hint: '$|\\sqrt x - 2| = \\frac{|x-4|}{\\sqrt x + 2}$. Since $\\sqrt x + 2 \\ge 2$ near $x=4$, $\\delta = 4\\varepsilon$ works (for small $\\varepsilon$).',
+    xR: [-1, 9], yR: [-1, 5],
+  },
+};
+
+// — Discontinuity zoo —
+const ZOO_LIB = {
+  removable: {
+    fn: x => Math.abs(x - 2) < 1e-12 ? undefined : (x*x - 4) / (x - 2),
+    a: 2, fA: undefined, Lm: 4, Lp: 4,
+    label: '(x²−4)/(x−2)', latex: '\\frac{x^2-4}{x-2}',
+    title: 'Removable discontinuity',
+    note: 'The limit is 4 (from both sides), but $f(2)$ is undefined. Defining $f(2)=4$ removes the discontinuity.',
+    which: 'Condition ① fails: $f(a)$ is not defined.',
+    xR: [-2, 6], yR: [-1, 8],
+  },
+  jump: {
+    fn: x => Math.abs(x - 1) < 1e-12 ? undefined : (x < 1 ? x : x + 2),
+    a: 1, fA: undefined, Lm: 1, Lp: 3,
+    label: 'piecewise', latex: 'f(x)=\\begin{cases}x & x<1 \\\\ x+2 & x>1\\end{cases}',
+    title: 'Jump discontinuity',
+    note: 'Left limit = 1, right limit = 3. They disagree, so the two-sided limit does not exist.',
+    which: 'Condition ② fails: the limit does not exist (one-sided limits differ).',
+    xR: [-3, 5], yR: [-2, 7],
+  },
+  infinite: {
+    fn: x => Math.abs(x - 2) < 1e-12 ? undefined : 1 / (x - 2),
+    a: 2, fA: undefined, Lm: -Infinity, Lp: Infinity,
+    label: '1/(x−2)', latex: '\\frac{1}{x-2}',
+    title: 'Infinite discontinuity',
+    note: 'The function blows up near $x=2$. Neither one-sided limit is finite.',
+    which: 'Condition ② fails: the limit does not exist ($\\to \\pm\\infty$).',
+    xR: [-2, 6], yR: [-8, 8],
+  },
+  oscillating: {
+    fn: x => Math.abs(x - 1) < 1e-12 ? undefined : Math.sin(1 / (x - 1)),
+    a: 1, fA: undefined, Lm: null, Lp: null,
+    label: 'sin(1/(x−1))', latex: '\\sin\\frac{1}{x-1}',
+    title: 'Oscillating discontinuity',
+    note: 'Oscillates infinitely fast near $x=1$. No limit from either side.',
+    which: 'Condition ② fails: the limit does not exist (oscillation).',
+    xR: [-1, 3], yR: [-2, 2],
+  },
+};
+
+// — IVT functions —
+const IVT_LIB = {
+  cubic: {
+    fn: x => x*x*x - 3*x,
+    label: 'x³ − 3x', latex: 'x^3-3x',
+    interval: [-2.5, 2.5],
+    xR: [-3.5, 3.5], yR: [-5, 5],
+  },
+  sine: {
+    fn: x => 2 * Math.sin(x),
+    label: '2 sin(x)', latex: '2\\sin x',
+    interval: [-3, 3],
+    xR: [-4, 4], yR: [-3, 3],
+  },
+  quadratic: {
+    fn: x => x*x - 3,
+    label: 'x² − 3', latex: 'x^2-3',
+    interval: [-2.5, 2.5],
+    xR: [-3.5, 3.5], yR: [-4, 5],
+  },
+};
+
+
+// =====================================================================
+//  SECTION 1: Limit Explorer
+// =====================================================================
+(() => {
+  const fnKeys = ['quadratic','removable','sinc','sign','reciprocal','sin_recip','xsin_recip'];
+  let cur = 'quadratic';
+  const slider = $('approach1');
+  const plot = new FnPlot($('cv1'));
+
+  // build buttons
+  const wrap = $('fnBtns1');
+  fnKeys.forEach(key => {
+    const b = document.createElement('button');
+    b.textContent = FN_LIB[key].label;
+    b.dataset.fn = key;
+    if (key === cur) b.classList.add('active');
+    wrap.appendChild(b);
+  });
+
+  function pick(key) {
+    cur = key;
+    wrap.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.fn === key));
+    slider.value = 0;
+    update();
+  }
+
+  wrap.addEventListener('click', e => { if (e.target.dataset.fn) pick(e.target.dataset.fn); });
+
+  function update() {
+    const f = FN_LIB[cur];
+    const fn = f.fn, a = f.a;
+    // set plot range
+    plot.xMin = f.xR[0]; plot.xMax = f.xR[1];
+    plot.yMin = f.yR[0]; plot.yMax = f.yR[1];
+
+    const t = +slider.value;  // 0 (far) to 1 (close)
+    const hMax = Math.min(3, (f.xR[1] - f.xR[0]) * 0.3);
+    const hMin = 0.001;
+    const h = hMax * Math.pow(hMin / hMax, t); // logarithmic approach
+
+    const xL = a - h, xR = a + h;
+    const yL = fn(xL), yR = fn(xR);
+    const curveCol = cssVar('--curve');
+    const colL = cssVar('--i'), colR = cssVar('--j');
+
+    plot.clear(); plot.grid(); plot.axes();
+
+    // limit line
+    if (f.L !== null && f.L !== undefined && isFinite(f.L)) {
+      plot.hLine(f.L, cssVar('--ok'), 1.5, [6, 4]);
+      plot.label(f.xR[0] + 0.3, f.L, `L = ${fmt(f.L, 1)}`, cssVar('--ok'), 0, -10);
+    }
+
+    // vertical dashed at x = a
+    plot.vLine(a, cssVar('--muted'), 1, [4, 4]);
+
+    // squeeze bounds for x·sin(1/x)
+    if (cur === 'xsin_recip') {
+      plot.plotFn(x => Math.abs(x), cssVar('--muted'), 1.5);
+      plot.plotFn(x => -Math.abs(x), cssVar('--muted'), 1.5);
+    }
+
+    // the function
+    plot.plotFn(fn, curveCol);
+
+    // mark f(a) or hole
+    if (f.fA !== undefined) {
+      plot.point(a, f.fA, curveCol, 6, true);
+    } else {
+      // draw open circle at the limit value if the limit exists
+      if (f.L !== null && f.L !== undefined && isFinite(f.L)) {
+        plot.point(a, f.L, curveCol, 6, false);
+      }
+    }
+
+    // approach dots
+    if (yL !== undefined && isFinite(yL)) {
+      plot.point(xL, yL, colL, 7, true);
+      plot.label(xL, yL, `f(${fmt(xL,2)}) = ${fmt(yL,2)}`, colL, -120, -14);
+    }
+    if (yR !== undefined && isFinite(yR)) {
+      plot.point(xR, yR, colR, 7, true);
+      plot.label(xR, yR, `f(${fmt(xR,2)}) = ${fmt(yR,2)}`, colR, 12, -14);
+    }
+
+    // readout
+    let html = '';
+    const lmStr = f.Lm === null ? 'does not exist' : fmt(f.Lm, 2);
+    const lpStr = f.Lp === null ? 'does not exist' : fmt(f.Lp, 2);
+
+    html += `<div><span class="c-i">◀ From the left:</span> f(${fmt(xL,4)}) = ${yL !== undefined && isFinite(yL) ? fmt(yL,4) : '—'}`;
+    if (f.Lm !== null) html += ` → approaching <b>${fmt(f.Lm,2)}</b>`;
+    html += `</div>`;
+    html += `<div><span class="c-j">▶ From the right:</span> f(${fmt(xR,4)}) = ${yR !== undefined && isFinite(yR) ? fmt(yR,4) : '—'}`;
+    if (f.Lp !== null) html += ` → approaching <b>${fmt(f.Lp,2)}</b>`;
+    html += `</div>`;
+    html += `<div style="margin-top:8px">`;
+    if (f.L !== null && f.L !== undefined) {
+      html += `<span class="badge pass">Limit exists: L = ${fmt(f.L, 2)}</span>`;
+    } else {
+      html += `<span class="badge fail">Limit does not exist</span>`;
+      if (f.Lm !== null && f.Lp !== null && f.Lm !== f.Lp) {
+        html += ` <span class="hint" style="margin-left:8px">Left limit (${lmStr}) ≠ right limit (${lpStr})</span>`;
+      }
+    }
+    html += `</div>`;
+    $('readout1').innerHTML = html;
+    $('insight1').innerHTML = `<h3>${FN_LIB[cur].label}</h3><p>${FN_LIB[cur].desc}</p>`;
+    renderMath($('readout1')); renderMath($('insight1'));
+  }
+
+  slider.addEventListener('input', update);
+  $('play1').addEventListener('click', () => {
+    slider.value = 0;
+    animateRange(slider, 1, 2800, update);
+  });
+
+  plot.onDraw = update;
+  update();
+})();
+
+
+// =====================================================================
+//  SECTION 2: ε–δ Game
+// =====================================================================
+(() => {
+  const fnKeys = ['linear','quadratic','removable','sqrt'];
+  let cur = 'linear';
+  const epsS = $('epsSlider'), delS = $('delSlider');
+  const plot = new FnPlot($('cv2'));
+
+  // build buttons
+  const wrap = $('fnBtns2');
+  fnKeys.forEach(key => {
+    const b = document.createElement('button');
+    b.textContent = ED_LIB[key].label;
+    b.dataset.fn = key;
+    if (key === cur) b.classList.add('active');
+    wrap.appendChild(b);
+  });
+
+  function pick(key) {
+    cur = key;
+    wrap.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.fn === key));
+    update();
+  }
+  wrap.addEventListener('click', e => { if (e.target.dataset.fn) pick(e.target.dataset.fn); });
+
+  function checkCondition(fn, a, L, eps, delta) {
+    const samples = 600;
+    for (let i = 1; i <= samples; i++) {
+      const t = i / samples;
+      for (const sign of [-1, 1]) {
+        const x = a + sign * delta * t;
+        const y = fn(x);
+        if (y === undefined || isNaN(y) || !isFinite(y)) continue;
+        if (Math.abs(y - L) >= eps) return false;
+      }
+    }
+    return true;
+  }
+
+  function update() {
+    const f = ED_LIB[cur];
+    const fn = f.fn, a = f.a, L = f.L;
+    const eps = +epsS.value, delta = +delS.value;
+    plot.xMin = f.xR[0]; plot.xMax = f.xR[1];
+    plot.yMin = f.yR[0]; plot.yMax = f.yR[1];
+    $('epsVal').textContent = fmt(eps, 2);
+    $('delVal').textContent = fmt(delta, 2);
+
+    const ok = checkCondition(fn, a, L, eps, delta);
+    const curveCol = cssVar('--curve');
+    const epsCol = cssVar('--band-eps'), delCol = cssVar('--band-del');
+
+    plot.clear(); plot.grid(); plot.axes();
+
+    // ε band (horizontal)
+    plot.hBand(L, eps, epsCol);
+    plot.hLine(L + eps, cssVar('--ok'), 1, [3, 3]);
+    plot.hLine(L - eps, cssVar('--ok'), 1, [3, 3]);
+    plot.hLine(L, cssVar('--ok'), 1.5, [6, 4]);
+    plot.label(f.xR[1] - 0.5, L + eps, 'L+ε', cssVar('--ok'), 4, -6);
+    plot.label(f.xR[1] - 0.5, L - eps, 'L−ε', cssVar('--ok'), 4, 14);
+
+    // δ band (vertical)
+    plot.vBand(a, delta, delCol);
+    plot.vLine(a + delta, cssVar('--j'), 1, [3, 3]);
+    plot.vLine(a - delta, cssVar('--j'), 1, [3, 3]);
+    plot.vLine(a, cssVar('--muted'), 1.5, [5, 4]);
+
+    // the function (full)
+    plot.plotFn(fn, curveCol, 2);
+
+    // highlight the curve within the δ band
+    const hlCol = ok ? cssVar('--ok') : cssVar('--warn');
+    plot.plotFnRange(fn, a - delta, a + delta, hlCol, 3.5);
+
+    // mark the target point
+    plot.point(a, L, cssVar('--ok'), 5, true);
+    plot.label(a, L, `(a, L) = (${a}, ${L})`, cssVar('--muted'), 10, 16);
+
+    // result
+    let html = '';
+    if (ok) {
+      html += `<span class="badge pass">✓ Success!</span> `;
+      html += `For this $\\varepsilon = ${fmt(eps,2)}$, your $\\delta = ${fmt(delta,2)}$ works: `;
+      html += `the <span class="ok">highlighted curve</span> stays inside the green band.`;
+    } else {
+      html += `<span class="badge fail">✗ Not yet</span> `;
+      html += `The <span class="warn">highlighted curve</span> escapes the green band. Try a smaller $\\delta$.`;
+    }
+    html += `<div style="margin-top:8px" class="hint">${f.hint}</div>`;
+    $('readout2').innerHTML = html;
+    renderMath($('readout2'));
+  }
+
+  epsS.addEventListener('input', update);
+  delS.addEventListener('input', update);
+  plot.onDraw = update;
+  update();
+})();
+
+
+// =====================================================================
+//  SECTION 3: Continuity — Three Conditions
+// =====================================================================
+(() => {
+  const c1 = $('cond1'), c2 = $('cond2'), c3 = $('cond3');
+  const plot = new FnPlot($('cv3'), { xMin: -3, xMax: 5, yMin: -1, yMax: 7 });
+  const a = 2;
+  const baseFn = x => 0.4 * x * x;  // base continuous function
+  const baseVal = baseFn(a);  // = 1.6
+  const jumpVal = baseVal + 2;  // value on the right side when jump
+  const movedVal = baseVal + 2.5;  // displaced point value
+
+  function update() {
+    const hasDef = c1.checked, hasLim = c2.checked, hasEq = c3.checked;
+    $('st1').textContent = hasDef ? '✓' : '✗';
+    $('st1').className = 'status ' + (hasDef ? 'ok' : 'warn');
+    $('st2').textContent = hasLim ? '✓' : '✗';
+    $('st2').className = 'status ' + (hasLim ? 'ok' : 'warn');
+    $('st3').textContent = (hasDef && hasLim && hasEq) ? '✓' : ((!hasDef || !hasLim) ? '—' : (hasEq ? '✓' : '✗'));
+    $('st3').className = 'status ' + ((hasDef && hasLim && hasEq) ? 'ok' : ((!hasDef || !hasLim) ? '' : (hasEq ? 'ok' : 'warn')));
+
+    const curveCol = cssVar('--curve');
+    plot.clear(); plot.grid(); plot.axes();
+    plot.vLine(a, cssVar('--muted'), 1, [4, 4]);
+
+    if (hasLim) {
+      // limit exists: same value from both sides
+      plot.plotFn(x => {
+        if (Math.abs(x - a) < 1e-12) return undefined;
+        return baseFn(x);
+      }, curveCol, 2.5);
+      // open circle at the limit point
+      plot.point(a, baseVal, curveCol, 6, false);
+
+      if (hasDef) {
+        if (hasEq) {
+          // All three: continuous! Fill in the point at the right place
+          plot.point(a, baseVal, curveCol, 7, true);
+        } else {
+          // Defined but ≠ limit: displaced point
+          plot.point(a, movedVal, cssVar('--warn'), 7, true);
+          plot.label(a, movedVal, `f(${a}) = ${fmt(movedVal,1)}`, cssVar('--warn'), 10, -10);
+        }
+      }
+      plot.label(a, baseVal, `lim = ${fmt(baseVal,1)}`, cssVar('--ok'), 10, 14);
+      plot.hLine(baseVal, cssVar('--ok'), 1, [4, 4]);
+    } else {
+      // limit does not exist: jump
+      const leftFn  = x => baseFn(x);
+      const rightFn = x => baseFn(x) + (jumpVal - baseVal);
+      // left branch
+      plot.plotFnRange(x => {
+        if (Math.abs(x - a) < 1e-12) return undefined;
+        return leftFn(x);
+      }, plot.xMin, a, curveCol, 2.5);
+      // right branch
+      plot.plotFnRange(x => {
+        if (Math.abs(x - a) < 1e-12) return undefined;
+        return rightFn(x);
+      }, a, plot.xMax, curveCol, 2.5);
+      // open circles at both limits
+      plot.point(a, baseVal, cssVar('--i'), 6, false);
+      plot.point(a, jumpVal, cssVar('--j'), 6, false);
+      plot.label(a, baseVal, `L⁻ = ${fmt(baseVal,1)}`, cssVar('--i'), -80, 10);
+      plot.label(a, jumpVal, `L⁺ = ${fmt(jumpVal,1)}`, cssVar('--j'), 10, -10);
+
+      if (hasDef) {
+        // place f(a) somewhere (at the left limit by convention)
+        const fVal = hasEq ? baseVal : movedVal;
+        plot.point(a, fVal, cssVar('--warn'), 7, true);
+        plot.label(a, fVal, `f(${a}) = ${fmt(fVal,1)}`, cssVar('--warn'), 10, 18);
+      }
+    }
+
+    // status text
+    const isCont = hasDef && hasLim && hasEq;
+    let html = '';
+    if (isCont) {
+      html = `<span class="badge pass">Continuous at x = ${a}</span> All three conditions hold. The value you'd <em>predict</em> from nearby points is exactly the value you <em>get</em>.`;
+    } else {
+      html = `<span class="badge fail">Not continuous at x = ${a}</span> `;
+      if (!hasDef) html += `$f(${a})$ is not defined — there's a hole in the domain.`;
+      else if (!hasLim) html += `The limit doesn't exist — the function jumps.`;
+      else html += `$f(${a}) = ${fmt(movedVal,1)} \\neq ${fmt(baseVal,1)} = \\lim$. The point is in the "wrong" place.`;
+    }
+    $('readout3').innerHTML = html;
+    renderMath($('readout3'));
+  }
+
+  c1.addEventListener('change', update);
+  c2.addEventListener('change', update);
+  c3.addEventListener('change', update);
+  plot.onDraw = update;
+  update();
+})();
+
+
+// =====================================================================
+//  SECTION 4: Discontinuity Zoo
+// =====================================================================
+(() => {
+  const zooKeys = ['removable','jump','infinite','oscillating'];
+  let cur = 'removable';
+  const plot = new FnPlot($('cv4'));
+
+  $('zooGrid').addEventListener('click', e => {
+    const card = e.target.closest('.zoo-card');
+    if (!card || !card.dataset.zoo) return;
+    cur = card.dataset.zoo;
+    document.querySelectorAll('.zoo-card').forEach(c => c.classList.toggle('active', c.dataset.zoo === cur));
+    update();
+  });
+
+  function update() {
+    const z = ZOO_LIB[cur];
+    const fn = z.fn, a = z.a;
+    plot.xMin = z.xR[0]; plot.xMax = z.xR[1];
+    plot.yMin = z.yR[0]; plot.yMax = z.yR[1];
+    const curveCol = cssVar('--curve');
+
+    plot.clear(); plot.grid(); plot.axes();
+    plot.vLine(a, cssVar('--muted'), 1, [4, 4]);
+    plot.plotFn(fn, curveCol, 2.5);
+
+    // mark the special point
+    if (z.fA !== undefined && isFinite(z.fA)) {
+      plot.point(a, z.fA, curveCol, 7, true);
+    }
+    // mark the limit(s) with open circles
+    if (z.Lm !== null && z.Lm !== undefined && isFinite(z.Lm)) {
+      plot.point(a, z.Lm, cssVar('--i'), 6, z.Lm === z.Lp); // filled if both sides agree
+      if (z.Lm !== z.Lp) plot.label(a, z.Lm, `L⁻ = ${fmt(z.Lm,1)}`, cssVar('--i'), -80, 10);
+    }
+    if (z.Lp !== null && z.Lp !== undefined && isFinite(z.Lp) && z.Lp !== z.Lm) {
+      plot.point(a, z.Lp, cssVar('--j'), 6, false);
+      plot.label(a, z.Lp, `L⁺ = ${fmt(z.Lp,1)}`, cssVar('--j'), 10, -10);
+    }
+    // open circle at hole
+    if (z.fA === undefined && z.Lm === z.Lp && z.Lm !== null && isFinite(z.Lm)) {
+      plot.point(a, z.Lm, curveCol, 6, false);
+      plot.label(a, z.Lm, `hole: limit = ${fmt(z.Lm,1)}`, cssVar('--ok'), 10, -10);
+    }
+
+    let html = `<b>${z.title}</b><br>${z.note}<br><span class="hint">${z.which}</span>`;
+    $('readout4').innerHTML = html;
+    renderMath($('readout4'));
+  }
+
+  plot.onDraw = update;
+  update();
+})();
+
+
+// =====================================================================
+//  SECTION 5: IVT
+// =====================================================================
+(() => {
+  const fnKeys = ['cubic','sine','quadratic'];
+  let cur = 'cubic';
+  let kValue = 0.5; // the y-level being dragged
+  const plot = new FnPlot($('cv5'));
+  let dragging = false;
+
+  // build buttons
+  const wrap = $('fnBtns5');
+  fnKeys.forEach(key => {
+    const b = document.createElement('button');
+    b.textContent = IVT_LIB[key].label;
+    b.dataset.fn = key;
+    if (key === cur) b.classList.add('active');
+    wrap.appendChild(b);
+  });
+
+  function pick(key) {
+    cur = key;
+    wrap.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.fn === key));
+    const f = IVT_LIB[cur];
+    const fA = f.fn(f.interval[0]), fB = f.fn(f.interval[1]);
+    kValue = (fA + fB) / 2;
+    update();
+  }
+  wrap.addEventListener('click', e => { if (e.target.dataset.fn) pick(e.target.dataset.fn); });
+
+  // Find x in [lo, hi] where fn(x) ≈ k (bisection)
+  function findRoot(fn, lo, hi, k, tol = 1e-6, maxIter = 100) {
+    let fLo = fn(lo) - k, fHi = fn(hi) - k;
+    if (Math.abs(fLo) < tol) return lo;
+    if (Math.abs(fHi) < tol) return hi;
+    if (fLo * fHi > 0) return null;
+    for (let i = 0; i < maxIter; i++) {
+      const mid = (lo + hi) / 2;
+      const fMid = fn(mid) - k;
+      if (Math.abs(fMid) < tol || (hi - lo) < tol) return mid;
+      if (fLo * fMid <= 0) { hi = mid; fHi = fMid; }
+      else { lo = mid; fLo = fMid; }
+    }
+    return (lo + hi) / 2;
+  }
+
+  // Find ALL roots in [lo, hi] by scanning sub-intervals
+  function findAllRoots(fn, lo, hi, k, nScan = 500) {
+    const dx = (hi - lo) / nScan;
+    const roots = [];
+    for (let i = 0; i < nScan; i++) {
+      const xL = lo + i * dx, xR = xL + dx;
+      const yL = fn(xL) - k, yR = fn(xR) - k;
+      if (yL * yR <= 0) {
+        const r = findRoot(fn, xL, xR, k);
+        if (r !== null && !roots.some(prev => Math.abs(prev - r) < 1e-4)) roots.push(r);
+      }
+    }
+    return roots;
+  }
+
+  function update() {
+    const f = IVT_LIB[cur];
+    const fn = f.fn, [intA, intB] = f.interval;
+    plot.xMin = f.xR[0]; plot.xMax = f.xR[1];
+    plot.yMin = f.yR[0]; plot.yMax = f.yR[1];
+    const curveCol = cssVar('--curve');
+
+    const fA = fn(intA), fB = fn(intB);
+    const kMin = Math.min(fA, fB), kMax = Math.max(fA, fB);
+    const kClamped = Math.max(Math.min(kValue, f.yR[1] - 0.2), f.yR[0] + 0.2);
+    const inRange = kClamped >= kMin && kClamped <= kMax;
+
+    plot.clear(); plot.grid(); plot.axes();
+
+    // shade the interval
+    const ctx = plot.ctx;
+    ctx.fillStyle = cssVar('--band-del');
+    ctx.fillRect(plot.sx(intA), 0, plot.sx(intB) - plot.sx(intA), plot.H);
+
+    // the function (full range)
+    plot.plotFn(fn, curveCol, 2);
+    // highlight within interval
+    plot.plotFnRange(fn, intA, intB, curveCol, 3.5);
+
+    // k line
+    plot.hLine(kClamped, cssVar('--v'), 2, [8, 5]);
+    plot.label(f.xR[1] - 0.5, kClamped, `k = ${fmt(kClamped,2)}`, cssVar('--v'), -80, -14);
+
+    // endpoints
+    plot.point(intA, fA, cssVar('--i'), 7, true);
+    plot.label(intA, fA, `f(a) = ${fmt(fA,1)}`, cssVar('--i'), -90, fA > kClamped ? -14 : 14);
+    plot.point(intB, fB, cssVar('--j'), 7, true);
+    plot.label(intB, fB, `f(b) = ${fmt(fB,1)}`, cssVar('--j'), 10, fB > kClamped ? -14 : 14);
+
+    // find intersections
+    const roots = findAllRoots(fn, intA, intB, kClamped);
+    roots.forEach(c => {
+      plot.point(c, kClamped, cssVar('--ok'), 7, true);
+      plot.vLine(c, cssVar('--ok'), 1, [3, 3]);
+    });
+
+    // readout
+    let html = '';
+    if (inRange) {
+      html += `<span class="badge pass">IVT guarantees a solution</span> `;
+      html += `$k = ${fmt(kClamped,2)}$ is between $f(a)=${fmt(fA,2)}$ and $f(b)=${fmt(fB,2)}$, so there must be at least one $c$ with $f(c)=k$. `;
+      if (roots.length > 0) {
+        html += `Found: ` + roots.map(c => `$c \\approx ${fmt(c,3)}$`).join(', ') + `.`;
+      }
+    } else {
+      html += `<span class="badge fail">k is outside [f(a), f(b)]</span> `;
+      html += `IVT says nothing when $k$ is outside the range. There <em>might</em> still be a solution, but it's not guaranteed.`;
+      if (roots.length > 0) {
+        html += ` (In fact, there ${roots.length === 1 ? 'is' : 'are'} ${roots.length} crossing${roots.length>1?'s':''} here, but that's luck, not the theorem.)`;
+      }
+    }
+    $('readout5').innerHTML = html;
+    if (window.renderMathInElement) renderMathInElement($('readout5'));
+  }
+
+  // dragging the k line
+  const cv = $('cv5');
+  cv.addEventListener('pointerdown', e => {
+    const rect = cv.getBoundingClientRect();
+    const sy = e.clientY - rect.top;
+    const y = plot.my(sy);
+    if (Math.abs(plot.sy(kValue) - sy) < 20) {
+      dragging = true;
+      cv.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    }
+  });
+  cv.addEventListener('pointermove', e => {
+    const rect = cv.getBoundingClientRect();
+    const sy = e.clientY - rect.top;
+    if (dragging) {
+      kValue = plot.my(sy);
+      kValue = Math.max(plot.yMin + 0.1, Math.min(plot.yMax - 0.1, kValue));
+      update();
+    } else {
+      const near = Math.abs(plot.sy(kValue) - sy) < 20;
+      cv.style.cursor = near ? 'ns-resize' : 'default';
+    }
+  });
+  cv.addEventListener('pointerup', () => { dragging = false; });
+  cv.addEventListener('pointercancel', () => { dragging = false; });
+
+  plot.onDraw = update;
+  pick('cubic');
+})();
+
+
+// Redraw on theme change
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  document.querySelectorAll('canvas').forEach(c => {
+    const ctx = c.getContext('2d');
+    // trigger redraw via ResizeObserver by toggling a class (noop resize)
+    c.style.width = c.style.width;
+  });
+});
+</script>
+</body>
+</html>

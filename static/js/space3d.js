@@ -58,6 +58,7 @@ class Space3D {
       this.pitch = Math.max(-1.45, Math.min(1.45, this.pitch + (e.clientY - last[1]) * 0.01));
       last = [e.clientX, e.clientY];
       this.draw();
+      this.onView && this.onView();
     });
     const end = () => { last = null; canvas.style.cursor = "grab"; };
     canvas.addEventListener("pointerup", end);
@@ -67,6 +68,7 @@ class Space3D {
       e.preventDefault();
       this.zoom = Math.max(0.4, Math.min(3, this.zoom * Math.exp(-e.deltaY * 0.001)));
       this.draw();
+      this.onView && this.onView();
     }, { passive: false });
   }
 

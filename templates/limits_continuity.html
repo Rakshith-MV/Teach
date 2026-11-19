@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Limits & Continuity · Math, Visualized{% endblock %}
+{% block crumbs %}<span class="crumb">/ Limits & Continuity</span>{% endblock %}
+{% block content %}
+
+<section class="hero small">
+  <h1>Limits & Continuity</h1>
+  <p class="lead">$\lim_{x\to a} f(x) = L$ means <strong>you can make $f(x)$ as close to $L$ as anyone demands, just by taking
+    $x$ close enough to $a$</strong>. What happens exactly at $x = a$ doesn't matter. A function is <em>continuous</em> at
+    $a$ when the limit exists and equals $f(a)$: no jumps, no holes, no surprises.</p>
+  <nav class="toc">
+    <a href="#l1">1 · The ε–δ game</a>
+    <a href="#l2">2 · From the left, from the right</a>
+    <a href="#l3">3 · Ways to be discontinuous</a>
+    <a href="#l4">4 · The derivative is a limit</a>
+    <a href="#l5">5 · Why ML cares</a>
+  </nav>
+</section>
+
+<!-- ============================ 1. EPSILON-DELTA ============================ -->
+<section class="lesson" id="l1">
+  <h2><span class="num">1</span> The ε–δ game</h2>
+  <p>Think of it as a game between two players. A challenger picks a tolerance $\varepsilon$ (the
+    <span class="c-accent">horizontal band</span> around $L$). You must answer with a $\delta$ (the
+    <span class="c-j">vertical band</span> around $a$) so that <b>every</b> $x$ in that band, except possibly $a$ itself, has
+    $f(x)$ inside the $\varepsilon$-band. If you can always answer, however small $\varepsilon$ gets, then
+    $\lim_{x\to a} f(x) = L$.
+    $$\forall \varepsilon>0\;\; \exists \delta>0:\quad 0<|x-a|<\delta \;\Rightarrow\; |f(x)-L|<\varepsilon$$</p>
+
+  <div class="controls">
+    <div class="presets" id="fnBtns"><span class="label">Function:</span></div>
+  </div>
+  <div class="controls">
+    <label>Claimed limit L <input type="range" id="eL" step="0.01"> <span class="mono" id="eLval"></span></label>
+    <label>ε <input type="range" id="eEps" min="-2.5" max="0.3" step="0.01" value="-0.3"> <span class="mono" id="eEpsval"></span></label>
+    <label>δ <input type="range" id="eDel" min="-4" max="0.3" step="0.01" value="-0.3"> <span class="mono" id="eDelval"></span></label>
+    <label>Zoom <input type="range" id="eZoom" min="-3" max="0.7" step="0.01" value="0.3"></label>
+  </div>
+  <div class="controls">
+    <button id="findDel">Find a δ for me</button>
+    <button id="shrinkEps">Challenge: halve ε</button>
+    <label class="chk"><input type="checkbox" id="autoZoom" checked> auto-zoom to δ</label>
+  </div>
+
+  <figure>
+    <canvas id="cvEps" class="plane wide"></canvas>
+  </figure>
+  <div class="callout" id="epsVerdict"></div>
+
+  <details class="teach">
+    <summary>Questions to ask the student</summary>
+    <ol>
+      <li>For $x^2$: as ε halves, roughly how does the δ you need change? (It halves too, near $a=1$: $\delta \approx \varepsilon/2$.)</li>
+      <li>For $\sin(x)/x$: $f(0)$ isn't even defined. Why doesn't that stop the limit from existing?</li>
+      <li>For the jump: find an $L$ and ε where you <em>can</em> win. Why does that not prove the limit exists?</li>
+      <li>For $\sin(1/x)$: zoom in as far as you like. Why can no $L$ ever work for ε = 0.5?</li>
+      <li>$x\sin(1/x)$ oscillates infinitely often too. Why does it have a limit? (It is squeezed between $-|x|$ and $|x|$.)</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ============================ 2. ONE-SIDED ============================ -->
+<section class="lesson" id="l2">
+  <h2><span class="num">2</span> Approaching from the left and from the right</h2>
+  <p>The limit exists only if both one-sided limits exist <b>and agree</b>:
+    $\lim_{x\to a^-} f(x) = \lim_{x\to a^+} f(x)$. Slide $h$ towards 0 and watch the two points walk in from each side.</p>
+  <div class="controls">
+    <div class="presets" id="fnBtns2"><span class="label">Function:</span></div>
+  </div>
+  <div class="twin wide-left">
+    <figure>
+      <canvas id="cvSide" class="plane wide"></canvas>
+      <div class="row">
+        <button id="playSide" class="small">▶ Approach</button>
+        <span class="mono">h =</span>
+        <input type="range" id="sideH" min="-3" max="0" step="0.01" value="0">
+        <span class="mono" id="sideHval"></span>
+      </div>
+    </figure>
+    <div class="side">
+      <div class="callout" id="sideTable" style="margin-top:0"></div>
+      <div class="callout" id="sideVerdict"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 3. GALLERY ============================ -->
+<section class="lesson" id="l3">
+  <h2><span class="num">3</span> Ways to be discontinuous</h2>
+  <p>$f$ is continuous at $a$ when all three of these hold: <b>(1)</b> $f(a)$ is defined, <b>(2)</b> $\lim_{x\to a} f(x)$ exists,
+    and <b>(3)</b> they are equal. Each picture below breaks a different condition.</p>
+  <div class="gallery" id="gallery"></div>
+</section>
+
+<!-- ============================ 4. DERIVATIVE ============================ -->
+<section class="lesson" id="l4">
+  <h2><span class="num">4</span> The derivative is a limit</h2>
+  <p>The slope of a curve at $a$ is the limit of slopes of secant lines:
+    $$f'(a) = \lim_{h\to 0} \frac{f(a+h) - f(a)}{h}.$$
+    Every gradient used to train a neural network is one of these limits. Shrink $h$ and watch the secants
+    turn into the tangent. Then keep going, and watch the <b>computer</b> start to get it wrong.</p>
+  <div class="controls">
+    <div class="presets" id="dfnBtns"><span class="label">Function:</span></div>
+    <label>Point a <input type="range" id="dA" min="-2" max="2" step="0.01" value="1"> <span class="mono" id="dAval"></span></label>
+    <label>h = 10^ <input type="range" id="dH" min="-16" max="0" step="0.05" value="0"> <span class="mono" id="dHval"></span></label>
+    <button id="playD" class="small">▶ Shrink h</button>
+  </div>
+  <div class="twin wide-left">
+    <figure>
+      <figcaption><span class="c-i">forward secant</span> through $a$ and $a+h$ · <span class="c-j">backward secant</span>
+        through $a-h$ and $a$ · dashed = true tangent</figcaption>
+      <canvas id="cvDer" class="plane wide"></canvas>
+    </figure>
+    <div class="side">
+      <div class="callout" id="derBox" style="margin-top:3.6em"></div>
+      <figcaption style="min-height:0;margin-top:14px"><b>Error of the forward quotient vs h</b> (log–log)</figcaption>
+      <canvas id="cvErr" class="spark tall"></canvas>
+    </div>
+  </div>
+  <div class="callout" id="derNote"></div>
+</section>
+
+<!-- ============================ 5. ML ============================ -->
+<section class="lesson" id="l5">
+  <h2><span class="num">5</span> Why machine learning cares</h2>
+  <div class="twin wide-left">
+    <figure>
+      <figcaption><b>A limit of continuous functions can be discontinuous.</b> As $k\to\infty$, the smooth sigmoid
+        $\sigma(kx)$ tends to the step function. Its slope (<span class="c-j">blue</span>) turns into a spike: 0 almost
+        everywhere, huge at 0.</figcaption>
+      <canvas id="cvSig" class="plane wide"></canvas>
+      <div class="row">
+        <span class="mono">sharpness k</span>
+        <input type="range" id="sigK" min="-0.3" max="2" step="0.01" value="0">
+        <span class="mono" id="sigKval"></span>
+      </div>
+    </figure>
+    <div class="side">
+      <div class="callout" style="margin-top:3.6em">The original <b>perceptron</b> used the step function. Its gradient is 0 everywhere
+        (and undefined at 0), so gradient descent gets no signal about which way to move. Replacing it with the
+        <b>continuous, differentiable</b> sigmoid is what made backpropagation possible.</div>
+    </div>
+  </div>
+  <div class="cards" style="margin-top:20px">
+    <article><h3>Gradients need continuity</h3>
+      <p>Gradient descent assumes that a small change in the weights gives a small change in the loss. That is exactly what
+        continuity promises. Derivatives (Section 4) need even more: smoothness.</p></article>
+    <article><h3>Why we don't optimize accuracy</h3>
+      <p>Accuracy jumps in steps of $1/N$ as the weights change: it is piecewise constant, with gradient 0 almost everywhere.
+        So we train on <b>cross-entropy</b>, a continuous stand-in, and only <em>report</em> accuracy.</p></article>
+    <article><h3>ReLU's corner</h3>
+      <p>$\max(0,x)$ is continuous but has no derivative at 0: the left limit of the slope is 0 and the right is 1. Frameworks
+        simply pick 0 there (a "subgradient"). Try ReLU at $a = 0$ in Section 4.</p></article>
+    <article><h3>Lipschitz continuity & robustness</h3>
+      <p>If $|f(x)-f(y)| \le K|x-y|$, then $\delta = \varepsilon/K$ always wins the ε–δ game. A model with a small $K$ can't be
+        fooled by tiny input changes (adversarial examples). Spectral normalization and gradient penalties limit $K$.</p></article>
+    <article><h3>Limits hide in "temperature"</h3>
+      <p>$\operatorname{softmax}(z/T)$ is smooth for $T>0$. As $T\to 0$ it tends to the discontinuous argmax, the same story as
+        the sigmoid above. Tricks like Gumbel-softmax train with $T>0$ and lower it gradually.</p></article>
+    <article><h3>Computers can't take limits</h3>
+      <p>Section 4 shows that very small $h$ makes things <em>worse</em> because of rounding. That is why frameworks use
+        <b>automatic differentiation</b>, which applies the exact derivative rules, and use finite differences only to check
+        gradients.</p></article>
+  </div>
+</section>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/plane.js') }}"></script>
+<script src="{{ url_for('static', filename='js/limits.js') }}"></script>
+{% endblock %}
