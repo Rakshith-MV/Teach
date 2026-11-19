@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% block title %}Linear Transformations · Math, Visualized{% endblock %}
+{% block crumbs %}<span class="crumb">/ Linear Transformations</span>{% endblock %}
+{% block content %}
+
+<section class="hero small">
+  <h1>Linear Transformations</h1>
+  <p class="lead">The main idea: <strong>an invertible matrix doesn't change the space. It changes the
+    coordinates we use to describe it.</strong></p>
+  <nav class="toc">
+    <a href="#s1">1 · Two readings of one matrix</a>
+    <a href="#s3d">3D · The same idea in space</a>
+    <a href="#s2">2 · The best basis: eigenvectors</a>
+    <a href="#s3">3 · PCA: change of basis on data</a>
+    <a href="#s4">4 · Where this shows up in ML</a>
+  </nav>
+</section>
+
+<!-- ============================ SECTION 1 ============================ -->
+<section class="lesson" id="s1">
+  <h2><span class="num">1</span> Two readings of one matrix</h2>
+  <p>A $2\times2$ matrix $A$ is fully described by its columns, which are where the basis vectors land:
+    $A\hat\imath = a_1$ and $A\hat\jmath = a_2$. For any vector,
+    $$A\begin{bmatrix}x\\y\end{bmatrix} = x\,a_1 + y\,a_2 .$$
+    You can read this equation two ways. The pictures below show both, for the same matrix and the same vector.</p>
+
+  <div class="controls">
+    <div class="matrix-input">
+      <span class="bracket">A =</span>
+      <div class="mgrid">
+        <input type="number" step="0.1" id="m00" class="ci"><input type="number" step="0.1" id="m01" class="cj">
+        <input type="number" step="0.1" id="m10" class="ci"><input type="number" step="0.1" id="m11" class="cj">
+      </div>
+    </div>
+    <div class="presets" id="presets1">
+      <button data-m="2,1,1,1.5">General</button>
+      <button data-m="0.866,-0.5,0.5,0.866">Rotate 30°</button>
+      <button data-m="1,1,0,1">Shear</button>
+      <button data-m="2,0,0,0.5">Stretch</button>
+      <button data-m="-1,0,0,1">Reflect</button>
+      <button data-m="1,2,0.5,1">Singular (det 0)</button>
+      <button data-m="1,0,0,1">Identity</button>
+    </div>
+    <div class="readout" id="det1"></div>
+  </div>
+
+  <div class="twin">
+    <figure>
+      <figcaption><b>Reading 1: the space moves.</b> The point $v$ is carried to $Av$, and the grid is carried along with it.</figcaption>
+      <canvas id="cvActive" class="plane"></canvas>
+      <div class="row">
+        <button id="play1" class="small">▶ Play</button>
+        <input type="range" id="t1" min="0" max="1" step="0.01" value="1">
+        <span class="mono" id="t1val">t = 1.00</span>
+      </div>
+    </figure>
+    <figure>
+      <figcaption><b>Reading 2: the space stays put, the basis changes.</b> The same point, described in the basis $\{a_1, a_2\}$.</figcaption>
+      <canvas id="cvPassive" class="plane"></canvas>
+      <div class="legend">
+        <span><i class="sw sw-grid"></i>standard grid</span>
+        <span><i class="sw sw-new"></i>grid of new basis</span>
+        <span><i class="sw sw-v"></i>the point</span>
+      </div>
+    </figure>
+  </div>
+
+  <div class="callout" id="coordsBox"></div>
+
+  <p class="hint">Drag the tips of $a_1$ (orange) and $a_2$ (blue) to change the matrix. Drag the purple point to move it.</p>
+
+  <div class="insight">
+    <h3>Why the two readings are the same thing</h3>
+    <p>The numbers $(x, y)$ are the point's coordinates <em>in the new basis</em> $\{a_1, a_2\}$.
+      Multiplying by $A$ converts them to coordinates <em>in the standard basis</em>. $A^{-1}$ goes back the other way.</p>
+    $$\underbrace{\begin{bmatrix}x\\y\end{bmatrix}}_{\text{new-basis coords}}
+      \;\xrightarrow{\;A\;}\;
+      \underbrace{Av}_{\text{standard coords}}
+      \qquad\qquad
+      Av \;\xrightarrow{\;A^{-1}\;}\; \begin{bmatrix}x\\y\end{bmatrix}$$
+    <p><b>When is $A$ invertible?</b> Exactly when its columns $a_1, a_2$ form a basis, i.e. when they are not parallel
+      ($\det A \neq 0$). Then every point has exactly one name in the new coordinates. Try the <em>Singular</em>
+      preset: the grid collapses onto a line, many points get the same image, and no inverse can recover them.</p>
+    <p class="mono-note">The shaded cell is the image of the unit square. Its signed area is $\det A$, the factor by which
+      areas get scaled. A negative value means orientation flips, as in a mirror.</p>
+  </div>
+
+  <details class="teach">
+    <summary>Questions to ask the student</summary>
+    <ol>
+      <li>Set $A$ to the Identity. What does "coordinates in the new basis" mean now?</li>
+      <li>With <em>Stretch</em>: the point's new-basis coordinates stay $(x,y)$, but its standard coordinates change. Why?</li>
+      <li>Drag $a_2$ until it lies on top of $a_1$. What happens to $\det A$? Which points can no longer be described?</li>
+      <li>Rotation by 30°: is that "moving the space", or "turning your head"? (Both readings work.)</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ============================ SECTION 3D =========================== -->
+<section class="lesson" id="s3d">
+  <h2><span class="num small-num">3D</span> The same idea in three dimensions</h2>
+  <p>Nothing changes in 3D except the count. A $3\times3$ matrix has three columns: where
+    $\hat\imath, \hat\jmath, \hat k$ land.
+    $$A\begin{bmatrix}x\\y\\z\end{bmatrix} = x\,a_1 + y\,a_2 + z\,a_3$$
+    The unit cube becomes a slanted box (a parallelepiped) with volume $|\det A|$. $A$ is invertible exactly when
+    $a_1, a_2, a_3$ don't all lie in one plane. Then they form a basis of space, and $(x,y,z)$ is just the point's
+    address in that basis.</p>
+
+  <div class="controls">
+    <div class="matrix-input">
+      <span class="bracket">A =</span>
+      <div class="mgrid m3">
+        <input type="number" step="0.1" id="a3_00" class="ci"><input type="number" step="0.1" id="a3_01" class="cj"><input type="number" step="0.1" id="a3_02" class="ck">
+        <input type="number" step="0.1" id="a3_10" class="ci"><input type="number" step="0.1" id="a3_11" class="cj"><input type="number" step="0.1" id="a3_12" class="ck">
+        <input type="number" step="0.1" id="a3_20" class="ci"><input type="number" step="0.1" id="a3_21" class="cj"><input type="number" step="0.1" id="a3_22" class="ck">
+      </div>
+    </div>
+    <div class="matrix-input">
+      <span class="bracket">v =</span>
+      <div class="mgrid m1">
+        <input type="number" step="0.1" id="v3_0"><input type="number" step="0.1" id="v3_1"><input type="number" step="0.1" id="v3_2">
+      </div>
+    </div>
+    <div class="presets" id="presets3d">
+      <button data-m="1.5,0.5,0,0.3,1.2,0.4,0,0.4,1.3">General</button>
+      <button data-m="0.707,-0.707,0,0.707,0.707,0,0,0,1">Rotate 45° about z</button>
+      <button data-m="1,0,1,0,1,0.5,0,0,1">Shear</button>
+      <button data-m="2,0,0,0,1,0,0,0,0.5">Stretch</button>
+      <button data-m="1,0,0,0,1,0,0,0,-1">Mirror</button>
+      <button data-m="1,0,1,0,1,1,0,0,0">Flatten to plane</button>
+      <button data-m="1,1,1,0.5,0.5,0.5,0.5,0.5,0.5">Crush to line</button>
+      <button data-m="1,0,0,0,1,0,0,0,1">Identity</button>
+    </div>
+    <div class="readout" id="det3d"></div>
+  </div>
+
+  <div class="twin wide-left">
+    <figure>
+      <figcaption><b>The space moves.</b> The lattice, the unit cube and the point $v$ are all carried by $A$.
+        The faint floor grid and the grey axes stay fixed for reference.</figcaption>
+      <canvas id="cvSpace" class="plane"></canvas>
+      <div class="row">
+        <button id="play3d" class="small">▶ Play</button>
+        <input type="range" id="t3d" min="0" max="1" step="0.01" value="1">
+        <span class="mono" id="t3dval">t = 1.00</span>
+      </div>
+      <div class="row">
+        <label class="chk mono-note"><input type="checkbox" id="auto3d" checked> auto-rotate</label>
+        <label class="chk mono-note"><input type="checkbox" id="lattice3d" checked> show lattice</label>
+      </div>
+    </figure>
+    <div class="side">
+      <div class="callout" id="coords3d" style="margin-top:3.6em"></div>
+      <div class="legend" style="margin-top:14px">
+        <span><i class="sw" style="background:var(--i)"></i>a₁ = Aî</span>
+        <span><i class="sw" style="background:var(--j)"></i>a₂ = Aĵ</span>
+        <span><i class="sw" style="background:var(--k)"></i>a₃ = Ak̂</span>
+        <span><i class="sw sw-new"></i>transformed lattice</span>
+      </div>
+    </div>
+  </div>
+
+  <details class="teach">
+    <summary>Questions to ask the student</summary>
+    <ol>
+      <li><em>Flatten to plane</em>: $a_3 = a_1 + a_2$. Which points of space can still be reached? What happened to the volume?</li>
+      <li><em>Crush to line</em>: all three columns point the same way. What is the rank, and how much information survives?</li>
+      <li><em>Mirror</em>: the volume stays 1 but $\det A = -1$. What does the sign mean? (Right-handed becomes left-handed.)</li>
+      <li>Rotate about z: which vector doesn't move at all? (That's an eigenvector with eigenvalue 1.)</li>
+      <li>ML link: an embedding layer projecting 768 → 3 dimensions behaves like <em>Flatten</em>. It can't be undone,
+        which is why we choose the projection carefully (PCA, learned weights).</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ============================ SECTION 2 ============================ -->
+<section class="lesson" id="s2">
+  <h2><span class="num">2</span> Same transformation, different basis: $B = P^{-1}AP$</h2>
+  <p>If we can choose any basis, which one makes $A$ simplest? Pick a basis $P$ (its columns are the new basis vectors).
+    In that basis the same transformation is written $B = P^{-1} A P$: convert to standard coordinates ($P$),
+    apply $A$, then convert back ($P^{-1}$). <b>$A$ and $B$ describe the same geometry, only the numbers differ.</b></p>
+
+  <div class="controls">
+    <div class="presets" id="presets2">
+      <span class="label">Transformation $A$:</span>
+      <button data-m="2,1,1,2">Symmetric stretch</button>
+      <button data-m="3,1,0,2">Non-symmetric</button>
+      <button data-m="1,1,0,1">Shear</button>
+      <button data-m="0,-1,1,0">Rotate 90°</button>
+    </div>
+    <div class="presets" id="basis2">
+      <span class="label">Describe it in basis $P$:</span>
+      <button data-b="std">Standard</button>
+      <button data-b="eig">Eigenbasis</button>
+      <button data-b="skew">Some other basis</button>
+    </div>
+  </div>
+
+  <div class="twin wide-left">
+    <figure>
+      <figcaption>The grid of basis $P$, transformed by $A$. In the eigenbasis the grid lines only <b>stretch along
+        themselves</b>: they never rotate.</figcaption>
+      <canvas id="cvSim" class="plane"></canvas>
+      <div class="row">
+        <button id="play2" class="small">▶ Play</button>
+        <input type="range" id="t2" min="0" max="1" step="0.01" value="0">
+        <span class="mono" id="t2val">t = 0.00</span>
+      </div>
+    </figure>
+    <div class="side">
+      <div class="mats" id="mats2"></div>
+      <div class="callout" id="eigNote"></div>
+    </div>
+  </div>
+
+  <details class="teach">
+    <summary>Questions to ask the student</summary>
+    <ol>
+      <li>In the eigenbasis, $B$ is diagonal. What do the diagonal entries mean geometrically?</li>
+      <li>Why is the shear "stuck"? (It has only one eigen-direction, so there aren't enough eigenvectors to form a basis.)</li>
+      <li>Rotation has no real eigenvectors. Why does no line through the origin stay on itself?</li>
+      <li>For the symmetric matrix, notice that the eigenvectors are perpendicular. That is always true for symmetric
+        matrices, and it is the reason PCA works (next section).</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ============================ SECTION 3 ============================ -->
+<section class="lesson" id="s3">
+  <h2><span class="num">3</span> PCA is a change of basis on data</h2>
+  <p>Data features are coordinates. Height and weight are correlated: knowing one tells you something about the other.
+    The covariance matrix $\Sigma$ is symmetric, so it has a perpendicular eigenbasis $V$. Re-expressing each point as
+    $z = V^{\top}x$ is a <b>rotation of the coordinate axes</b>. In the new coordinates the features are uncorrelated:
+    $\operatorname{Cov}(z) = V^{\top}\Sigma V$ is diagonal. This is Section 2 again, with $P = V$.</p>
+
+  <div class="controls">
+    <label>Data angle <input type="range" id="pAngle" min="-90" max="90" step="1" value="35"></label>
+    <label>Elongation <input type="range" id="pRatio" min="1" max="6" step="0.1" value="3.5"></label>
+    <button id="pResample" class="small">New sample</button>
+    <label class="chk"><input type="checkbox" id="pWhiten"> Whiten (scale each axis to variance 1)</label>
+    <label class="chk"><input type="checkbox" id="pProject"> Drop PC2 (keep 1 dimension)</label>
+  </div>
+
+  <div class="twin wide-left">
+    <figure>
+      <figcaption>Slide from the original feature axes to the principal axes. <b>The data cloud stays the same; only the
+        axes we measure along change.</b></figcaption>
+      <canvas id="cvPCA" class="plane"></canvas>
+      <div class="row">
+        <span class="mono">original</span>
+        <input type="range" id="t3" min="0" max="1" step="0.01" value="0">
+        <span class="mono">principal</span>
+        <button id="play3" class="small">▶ Play</button>
+      </div>
+    </figure>
+    <div class="side">
+      <div class="mats" id="covBox"></div>
+      <div class="callout" id="pcaNote"></div>
+    </div>
+  </div>
+
+  <details class="teach">
+    <summary>Questions to ask the student</summary>
+    <ol>
+      <li>Watch the off-diagonal entry of the covariance as $t \to 1$. What does it reaching 0 mean in words?</li>
+      <li>The rotation is invertible, so no information is lost. Where exactly does information get lost in PCA?
+        (When we tick "Drop PC2", a projection with $\det = 0$, like the <em>Singular</em> preset in Section 1.)</li>
+      <li>Whitening is another invertible change of basis. Why might a model train faster on whitened inputs?</li>
+      <li>Set elongation to 1 (a round cloud). Why is the PCA direction now meaningless?</li>
+    </ol>
+  </details>
+</section>
+
+<!-- ============================ SECTION 4 ============================ -->
+<section class="lesson" id="s4">
+  <h2><span class="num">4</span> Where "it's just a change of basis" shows up in ML</h2>
+  <div class="cards">
+    <article>
+      <h3>Linear layers can't create information</h3>
+      <p>A layer $h = Wx$ with square, invertible $W$ only re-describes the input in new coordinates. Nothing is created
+        and nothing is lost. Stacking linear layers gives one linear layer ($W_2W_1x$). The <b>nonlinearity</b>
+        between them is what adds expressive power.</p>
+    </article>
+    <article>
+      <h3>Standardization & whitening</h3>
+      <p>Scaling features, decorrelating them, or applying PCA are all invertible changes of basis applied before
+        training. The model sees the same information, but the loss surface becomes rounder, so gradient
+        descent converges faster.</p>
+    </article>
+    <article>
+      <h3>The basis of an embedding is arbitrary</h3>
+      <p>For an orthogonal $Q$ (a rotation), $(Qx)\cdot(Qy) = x\cdot y$. Rotating every embedding leaves all dot products,
+        distances and attention scores ($q^{\top}k$) unchanged. This is why a single neuron or embedding dimension usually
+        has no fixed meaning: the network could equally well have learned a rotated basis.</p>
+    </article>
+    <article>
+      <h3>Normalizing flows</h3>
+      <p>These generative models chain <b>invertible</b> maps $z = f(x)$, so every data point has a unique latent code
+        and can be recovered. Densities transform with the determinant (area scaling, as in Section 1):
+        $p_x(x) = p_z(f(x))\,|\det J_f(x)|$.</p>
+    </article>
+    <article>
+      <h3>Conditioning & near-singular matrices</h3>
+      <p>When $\det A \approx 0$, the basis vectors are nearly parallel. Tiny changes in $Av$ then cause huge changes in the
+        recovered coordinates $A^{-1}(Av)$. That instability shows up as ill-conditioned least-squares problems,
+        exploding gradients and the need for regularization ($A^{\top}A + \lambda I$).</p>
+    </article>
+    <article>
+      <h3>Eigen/SVD everywhere</h3>
+      <p>The SVD $A = U\Sigma V^{\top}$ says that <em>every</em> matrix becomes a pure stretch once you pick the right bases:
+        rotate ($V^{\top}$), stretch ($\Sigma$), rotate ($U$). This idea underlies PCA, low-rank compression (LoRA),
+        recommender systems and spectral clustering.</p>
+    </article>
+  </div>
+</section>
+
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/plane.js') }}"></script>
+<script src="{{ url_for('static', filename='js/linear_transformations.js') }}"></script>
+<script src="{{ url_for('static', filename='js/space3d.js') }}"></script>
+<script src="{{ url_for('static', filename='js/lt3d.js') }}"></script>
+{% endblock %}

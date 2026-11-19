@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <h1>Math, Visualized</h1>
+  <p class="lead">Interactive pictures for teaching the ideas behind machine learning.
+    Pick a topic to open its lesson.</p>
+</section>
+
+<section class="topic-grid">
+  {% for t in topics %}
+  <a class="topic-card" href="{{ url_for('topic', slug=t.slug) }}">
+    <h2>{{ t.title }}</h2>
+    <p>{{ t.tagline }}</p>
+    <div class="tags">{% for tag in t.tags %}<span>{{ tag }}</span>{% endfor %}</div>
+    <span class="btn">Open lesson →</span>
+  </a>
+  {% endfor %}
+  <div class="topic-card placeholder">
+    <h2>More topics</h2>
+    <p>Add a template and an entry in <code>TOPICS</code> in <code>app.py</code>.</p>
+  </div>
+</section>
+{% endblock %}
